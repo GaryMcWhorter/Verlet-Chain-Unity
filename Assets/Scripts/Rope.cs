@@ -34,8 +34,9 @@ public class Rope : MonoBehaviour
 
     Camera cam;
 
-    RaycastHit[] raycastHitBuffer = new RaycastHit[10];
-    Collider[] colliderHitBuffer = new Collider[10];
+    [SerializeField] int colliderBufferSize = 10;
+    RaycastHit[] raycastHitBuffer;
+    Collider[] colliderHitBuffer;
 
     // Need a better way of stepping through collisions for high Gravity
     // And high Velocity
@@ -52,6 +53,8 @@ public class Rope : MonoBehaviour
     void Awake()
     {
         ropeNodes = new RopeNode[totalNodes];
+        raycastHitBuffer = new RaycastHit[colliderBufferSize];
+        colliderHitBuffer = new Collider[colliderBufferSize];
         gravity = new Vector3(0, -gravityStrength, 0);
         cam = Camera.main;
 
@@ -151,7 +154,7 @@ public class Rope : MonoBehaviour
             
             // cast ray towards this position to check for a collision
             int result = -1;
-            result = Physics.SphereCastNonAlloc(ropeNodes[i].transform.position, 0.21f, -direction.normalized, raycastHitBuffer);
+            result = Physics.SphereCastNonAlloc(ropeNodes[i].transform.position, 0.21f, -direction.normalized, raycastHitBuffer, 0.22f, ~(1 << 8));
 
             if (result > 0)
             {
@@ -184,7 +187,7 @@ public class Rope : MonoBehaviour
             RopeNode node = this.ropeNodes[i];
 
             int result = -1;
-            result = Physics.OverlapSphereNonAlloc(node.transform.position, 0.21f, colliderHitBuffer);
+            result = Physics.OverlapSphereNonAlloc(node.transform.position, 0.21f, colliderHitBuffer, ~(1 << 8));
 
             if (result > 0)
             {

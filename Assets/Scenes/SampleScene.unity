@@ -721,10 +721,11 @@ MonoBehaviour:
   ropeNodeRotatedPrefab: {fileID: 7802447631831565907, guid: 6bac02a28e5b2b4459f0e9b418bf3e47, type: 3}
   nodeDistance: 0.3
   totalNodes: 50
-  velocityDampen: 0.99
-  iterations: 200
+  velocityDampen: 0.95
+  iterations: 80
   mouseOffset: 10
   stiffness: 0.98
+  colliderBufferSize: 1
   gravityStrength: 1.962
 --- !u!4 &1418847131
 Transform:
