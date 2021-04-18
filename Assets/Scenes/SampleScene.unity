@@ -599,7 +599,7 @@ GameObject:
   - component: {fileID: 1418847131}
   - component: {fileID: 1418847130}
   - component: {fileID: 1418847129}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Rope
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -719,14 +719,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ropeNodePrefab: {fileID: 7802447631831565907, guid: a9d08e601c94e0046ab8a8d8c15adeb9, type: 3}
   ropeNodeRotatedPrefab: {fileID: 7802447631831565907, guid: 6bac02a28e5b2b4459f0e9b418bf3e47, type: 3}
-  nodeDistance: 0.3
-  totalNodes: 50
+  nodeDistance: 0.35
+  totalNodes: 100
   velocityDampen: 0.95
-  iterations: 80
+  iterations: 50
+  iterateCollisionsEvery: 1
   mouseOffset: 10
-  stiffness: 0.98
+  stiffness: 0.8
   colliderBufferSize: 1
   gravityStrength: 1.962
+  nodeColliderRadius: 0.2
+  link: {fileID: -2432090755550338912, guid: 6b0188350fb667a4788c2293274a6203, type: 3}
+  linkMaterial: {fileID: 2100000, guid: 78f2fb2ceb3e3814ca064dd49dc2748b, type: 2}
 --- !u!4 &1418847131
 Transform:
   m_ObjectHideFlags: 0

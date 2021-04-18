@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 7921689032322520185}
   - component: {fileID: -2814115370050950633}
   - component: {fileID: 5234933477104256049}
-  - component: {fileID: 5491991465652375212}
   - component: {fileID: 6569140124982539437}
   m_Layer: 8
   m_Name: RopeNode
@@ -84,19 +83,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &5491991465652375212
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7802447631831565907}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.2
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &6569140124982539437
 MonoBehaviour:
   m_ObjectHideFlags: 0
