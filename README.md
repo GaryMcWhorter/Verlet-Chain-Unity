@@ -6,6 +6,8 @@
 
 A chain/rope simulation in Unity using Verlet integration instead of rigidbodies and constraints.
 
+Inspired by [jongallant's 2D version](https://github.com/jongallant/Unity-Verlet-Rope)
+
 ## Getting Started <a name = "getting_started"></a>
 
 Git clone the project and open the Sample Scene to see the use.
