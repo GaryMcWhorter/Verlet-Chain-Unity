@@ -1,6 +1,6 @@
 # Verlet Chains
 
-![Verlet Chains](https://i.imgur.com/hBBQuVZ.gif)
+![Verlet Chains](https://i.imgur.com/aQyDTTk.gif)
 
 ## About <a name = "about"></a>
 
