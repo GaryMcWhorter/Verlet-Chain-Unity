@@ -6,6 +6,8 @@
 
 A chain/rope simulation in Unity using Verlet integration instead of rigidbodies and constraints.
 
+Uses GPU Instancing to draw the chain links from a single GameObject script.
+
 Inspired by [jongallant's 2D version](https://github.com/jongallant/Unity-Verlet-Rope)
 
 ## Getting Started <a name = "getting_started"></a>
