@@ -1,50 +1,44 @@
-using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(LineRenderer))]
 public class Rope : MonoBehaviour
 {
-    LineRenderer lineRenderer;
-    Vector3[] linePositions;
+    [Header("Instanced Mesh Details")]
+    [SerializeField, Tooltip("The Mesh of chain link to render")] Mesh link;
+    [SerializeField, Tooltip("The chain link material, must have gpu instancing enabled!")] Material linkMaterial;
 
-    RopeNode[] ropeNodes;
-    Vector3[] previousNodePositions;
-    
-    // It is slightly faster to iterate over an array than a List.
-    // private List<RopeNode> RopeNodes = new List<RopeNode>();
+    [Space]
 
-    [SerializeField] GameObject ropeNodePrefab;
-    [SerializeField] GameObject ropeNodeRotatedPrefab;
+    [Header("Demo Parameters")]
+    [SerializeField, Min(0), Tooltip("The distance to project the mouse into world space")] float mouseOffset = 10f;
 
-    // Distance Between Nodes
-    [SerializeField] float nodeDistance = 0.2f;
+    [Space]
 
-    [SerializeField] int totalNodes = 50;
+    [Header("Verlet Parameters")]
 
-    [SerializeField, Range(0, 1)] float velocityDampen = 0.99f;
+    [SerializeField, Tooltip("The distance between each link in the chain")] float nodeDistance = 0.35f;
+    [SerializeField, Tooltip("The radius of the sphere collider used for each chain link")] float nodeColliderRadius = 0.2f;
 
-    // Higher iterations == More stability of the simulation
-    [SerializeField] int iterations = 50;
+    [SerializeField, Tooltip("Works best with a lower value")] float gravityStrength = 2;
 
-    // Only check collisions over every n iteration
-    [SerializeField] int iterateCollisionsEvery = 1;
+    [SerializeField, Tooltip("The number of chain links. Decreases performance with high values and high iteration")] int totalNodes = 100;
 
-    // For Debug Drawing the chain/rope
-    private float ropeWidth = 0.1f;
+    [SerializeField, Range(0, 1), Tooltip("Modifier to dampen velocity so the simulation can stabilize")] float velocityDampen = 0.95f;
 
-    // For projecting the mouse into 3d space for this example
-    [SerializeField, Min(0)] float mouseOffset = 3f;
+    [SerializeField, Range(0, 0.99f), Tooltip("The stiffness of the simulation. Set to lower values for more elasticity")] float stiffness = 0.8f;
 
-    [SerializeField, Range(0, 0.99f)] float stiffness = 0.8f;
+    [SerializeField, Tooltip("Setting this will test collisions for every n iterations. Possibly more performance but less stable collisions")] int iterateCollisionsEvery = 1;
 
-    Camera cam;
+    [SerializeField, Tooltip("Iterations for the simulation. More iterations is more expensive but more stable")] int iterations = 100;
 
-    [SerializeField] int colliderBufferSize = 10;
+    [SerializeField, Tooltip("How many colliders to test against for every node.")] int colliderBufferSize = 1;
+
     RaycastHit[] raycastHitBuffer;
     Collider[] colliderHitBuffer;
+    Camera cam;
 
     // Need a better way of stepping through collisions for high Gravity
     // And high Velocity
-    [SerializeField] float gravityStrength;
     Vector3 gravity;
 
     Vector3 startLock;
@@ -53,10 +47,16 @@ public class Rope : MonoBehaviour
     bool isStartLocked = false;
     bool isEndLocked = false;
 
-    [Header("Experimental")]
-    [SerializeField] float nodeColliderRadius = 0.2f;
-    [SerializeField] Mesh link;
-    [SerializeField] Material linkMaterial;
+    [Space]
+
+    // For Debug Drawing the chain/rope
+    [Header("Line Renderer")]
+    [SerializeField, Tooltip("Width for the line renderer")] float ropeWidth = 0.1f;
+
+    LineRenderer lineRenderer;
+    Vector3[] linePositions;
+
+    Vector3[] previousNodePositions;
 
     Vector3[] currentNodePositions;
     Quaternion[] currentNodeRotations;
@@ -68,7 +68,6 @@ public class Rope : MonoBehaviour
 
     void Awake()
     {
-        ropeNodes = new RopeNode[totalNodes];
         currentNodePositions = new Vector3[totalNodes];
         previousNodePositions = new Vector3[totalNodes];
         currentNodeRotations = new Quaternion[totalNodes];
@@ -79,7 +78,7 @@ public class Rope : MonoBehaviour
         cam = Camera.main;
         lineRenderer = this.GetComponent<LineRenderer>();
 
-        // using a dynamically created GameObject to test collisions on every node
+        // using a single dynamically created GameObject to test collisions on every node
         nodeTester = new GameObject();
         nodeTester.name = "Node Tester";
         nodeTester.layer = 8;
@@ -89,29 +88,14 @@ public class Rope : MonoBehaviour
 
         matrices = new Matrix4x4[totalNodes];
 
-        // Generate some rope nodes based on properties
         Vector3 startPosition = Vector3.zero;
         for (int i = 0; i < totalNodes; i++)
         {
 
-            // RopeNode node;            
-            // if(i % 2 == 0)
-            // {
-            //     // node.transform.rotation = node.transform.rotation * Quaternion.Euler(0, 0, 90);
-            //     node = (GameObject.Instantiate(ropeNodePrefab)).GetComponent<RopeNode>();
-            // }
-            // else
-            // {
-            //     node = (GameObject.Instantiate(ropeNodePrefab)).GetComponent<RopeNode>();
-            // }
-            // node.transform.position = startPosition;
-
-            // node.PreviousPosition = startPosition;
             currentNodePositions[i] = startPosition;
-            previousNodePositions[i] = startPosition;
             currentNodeRotations[i] = Quaternion.identity;
-            // RopeNodes.Add(node);
-            // ropeNodes[i] = node;
+
+            previousNodePositions[i] = startPosition;
 
             matrices[i] = Matrix4x4.TRS(startPosition, Quaternion.identity, Vector3.one);
 
@@ -132,12 +116,10 @@ public class Rope : MonoBehaviour
             if (!isStartLocked)
             {
                 isStartLocked = true;
-                // startLock = cam.ScreenToWorldPoint(Input.mousePosition + new Vector3(0, 0, mouseOffset));
             }
             else if(!isEndLocked)
             {
                 isEndLocked = true;
-                // endLock = cam.ScreenToWorldPoint(Input.mousePosition + new Vector3(0, 0, mouseOffset));
             }
         }
         else if (!isStartLocked && !isEndLocked)
@@ -150,6 +132,8 @@ public class Rope : MonoBehaviour
         }
 
         DrawRope();
+
+        // Instanced drawing here is really performant over using GameObjects
         Graphics.DrawMeshInstanced(link, 0, linkMaterial, matrices, totalNodes);
     }
 
@@ -159,14 +143,12 @@ public class Rope : MonoBehaviour
 
         for (int i = 0; i < iterations; i++)
         {
-
             ApplyConstraint();
 
             if(i % iterateCollisionsEvery == 0)
             {
                 AdjustCollisions();
             }
-            // if(i % 2 == 0)
         }
 
         SetAngles();
@@ -175,71 +157,37 @@ public class Rope : MonoBehaviour
 
     private void Simulate()
     {
-        // step each node in rope
+        var fixedDt = Time.fixedDeltaTime;
         for (int i = 0; i < totalNodes; i++)
         {
-            // RopeNode node = this.ropeNodes[i];
-            // derive the velocity from previous frame
-            // Vector3 velocity = ropeNodes[i].transform.position - ropeNodes[i].PreviousPosition;
             Vector3 velocity = currentNodePositions[i] - previousNodePositions[i];
             velocity *= velocityDampen;
 
-            // Attempt to fix high velocity clipping, unsuccessfully
-            // if(velocity.magnitude > 0.1f)
-            // {
-            //     AdjustCollisions();
-            // }
-            // ropeNodes[i].PreviousPosition = ropeNodes[i].transform.position;
             previousNodePositions[i] = currentNodePositions[i];
 
             // calculate new position
             Vector3 newPos = currentNodePositions[i] + velocity;
-            newPos += gravity * Time.fixedDeltaTime;
+            newPos += gravity * fixedDt;
             Vector3 direction = currentNodePositions[i] - newPos;
-            
-            // cast ray towards this position to check for a collision
-            // int result = -1;
-            // result = Physics.SphereCastNonAlloc(currentNodePositions[i], nodeColliderRadius + 0.01f, -direction.normalized, raycastHitBuffer, 0.22f, ~(1 << 8));
 
-            // if (result > 0)
-            // {
-            //     for (int n = 0; n < result; n++)
-            //     {                    
-            //         if (raycastHitBuffer[n].collider.gameObject.layer == 9)
-            //         {
-            //             Vector3 colliderPosition = colliderHitBuffer[n].transform.position;
-            //             Quaternion colliderRotation = colliderHitBuffer[n].gameObject.transform.rotation;
-
-            //             Vector3 dir;
-            //             float distance;
-
-            //             Physics.ComputePenetration(nodeCollider, currentNodePositions[i], Quaternion.identity, colliderHitBuffer[n], colliderPosition, colliderRotation, out dir, out distance);
-            //             newPos += dir * distance;
-                        
-            //         }
-            //     }
-            // }
-
-            // ropeNodes[i].transform.position = newPos;
             currentNodePositions[i] = newPos;
         }
     }
     
     private void AdjustCollisions()
     {
-        // Loop rope nodes and check if currently colliding
         for (int i = 0; i < totalNodes; i++)
         {
-            // RopeNode node = this.ropeNodes[i];
+            if(i % 2 == 0) continue;
 
             int result = -1;
             result = Physics.OverlapSphereNonAlloc(currentNodePositions[i], nodeColliderRadius + 0.01f, colliderHitBuffer, ~(1 << 8));
 
-            if (result > 0)
-            {
+            // if (result > 0)
+            // {
                 for (int n = 0; n < result; n++)
                 {
-                    if (colliderHitBuffer[n].gameObject.layer != 8)
+                    // if (colliderHitBuffer[n].gameObject.layer != 8)
                     {
                         Vector3 colliderPosition = colliderHitBuffer[n].transform.position;
                         Quaternion colliderRotation = colliderHitBuffer[n].gameObject.transform.rotation;
@@ -252,7 +200,7 @@ public class Rope : MonoBehaviour
                         currentNodePositions[i] += dir * distance;
                     }
                 }
-            }
+            // }
         }    
     }
 
@@ -280,7 +228,6 @@ public class Rope : MonoBehaviour
                 direction = (node1 - node2).normalized;
             }
             else if (currentDistance < nodeDistance)
-            // else
             {
                 direction = (node2 - node1).normalized;
             }
@@ -301,36 +248,29 @@ public class Rope : MonoBehaviour
             var node1 = currentNodePositions[i];
             var node2 = currentNodePositions[i + 1];
 
-            if( i > 0)
+            var dir = (node2 - node1).normalized;
+            if(dir != Vector3.zero)
             {
-                Quaternion desiredRotation = Quaternion.LookRotation((node2 - node1).normalized, Vector3.right);
-                // node2.transform.rotation = Quaternion.RotateTowards(node2.transform.rotation, desiredRotation, 15f);
-                // node2.transform.rotation = desiredRotation;
-                currentNodeRotations[i + 1] = desiredRotation;
-                // matrices[i + 1] *= Matrix4x4.Rotate(desiredRotation);
-            }
-            else if( i < totalNodes - 1)
-            {
-                Quaternion desiredRotation = Quaternion.LookRotation((node2 - node1).normalized, Vector3.right);
-                // node2.transform.rotation = Quaternion.RotateTowards(node2.transform.rotation, desiredRotation, 15f);
-                // node2.transform.rotation = desiredRotation;
-                currentNodeRotations[i + 1] = desiredRotation;
-                // matrices[i + 1] *= Matrix4x4.Rotate(desiredRotation);
-            }
-            else
-            {
-                Quaternion desiredRotation = Quaternion.LookRotation((node2 - node1).normalized, Vector3.right);
-                // node1.transform.rotation = Quaternion.RotateTowards(node1.transform.rotation, desiredRotation, 15f);               
-                // node1.transform.rotation = desiredRotation;
-                currentNodeRotations[i] = desiredRotation;
-                // matrices[i] *= Matrix4x4.Rotate(desiredRotation);
+                if( i > 0)
+                {
+                    Quaternion desiredRotation = Quaternion.LookRotation(dir, Vector3.right);
+                    currentNodeRotations[i + 1] = desiredRotation;
+                }
+                else if( i < totalNodes - 1)
+                {
+                    Quaternion desiredRotation = Quaternion.LookRotation(dir, Vector3.right);
+                    currentNodeRotations[i + 1] = desiredRotation;
+                }
+                else
+                {
+                    Quaternion desiredRotation = Quaternion.LookRotation(dir, Vector3.right);
+                    currentNodeRotations[i] = desiredRotation;
+                }
             }
 
             if( i % 2 == 0 && i != 0)
             {
                 currentNodeRotations[i + 1] *= Quaternion.Euler(0, 0, 90);
-                // node1.transform.rotation *= Quaternion.Euler(0, 0, 90);
-                // matrices[i] *= Matrix4x4.Rotate(Quaternion.Euler(0, 0, 90));
             }
         }
     }
@@ -340,7 +280,6 @@ public class Rope : MonoBehaviour
         for(int i = 0; i < totalNodes; i++)
         {
             matrices[i].SetTRS(currentNodePositions[i], currentNodeRotations[i], Vector3.one);
-            // matrices[i].m03 = currentNodePositions[i].x;
         }
     }
 
